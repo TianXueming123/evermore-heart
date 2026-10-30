@@ -126,7 +126,7 @@ export default function Home() {
             <Sparkles size={13} />
           </div>
           <p className="recipient">
-            TO：{letter.recipient.trim() || '独一无二的你'}
+            TO：{letter.recipient.trim() || '轩宝宝~'}
           </p>
           <blockquote>“{letter.message}”</blockquote>
           {letter.signature.trim() && (
