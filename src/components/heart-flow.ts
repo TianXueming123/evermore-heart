@@ -87,7 +87,7 @@ function cubicPoint(
 }
 
 export class HeartFlow {
-  private readonly filaments: Filament[] = Array.from({ length: 68 }, (_, index) => ({
+  private readonly filaments: Filament[] = Array.from({ length: 24 }, (_, index) => ({
     angle: Math.PI * random(0.4, 1.6),
     reach: random(1.25, 2.65),
     lift: random(0.12, 1.1),
@@ -99,7 +99,7 @@ export class HeartFlow {
     color: index % FILAMENT_COLORS.length,
   }))
 
-  private readonly sparkles: Sparkle[] = Array.from({ length: 1680 }, () => ({
+  private readonly sparkles: Sparkle[] = Array.from({ length: 1380 }, () => ({
     angle: Math.random() * TAU,
     radius:
       Math.random() < 0.72
@@ -110,13 +110,13 @@ export class HeartFlow {
     phase: Math.random() * TAU,
     speed: random(0.8, 2.5),
     color: Math.floor(random(0, FILAMENT_COLORS.length)),
-    cross: Math.random() < 0.16,
+    cross: Math.random() < 0.1,
   }))
 
-  private readonly contourStreams = Array.from({ length: 36 }, (_, index) => ({
+  private readonly contourStreams = Array.from({ length: 20 }, (_, index) => ({
     offset: Math.random(),
     speed: random(0.055, 0.095),
-    radius: index % 4 === 0 ? random(0.5, 0.78) : random(0.91, 1.035),
+    radius: random(0.94, 1.025),
     trail: random(0.2, 0.5),
     width: random(0.65, 1.35),
     depth: random(-0.08, 0.08),
@@ -143,8 +143,8 @@ export class HeartFlow {
       burst,
     } = options
     const animatedTime = time * motion
-    const count = isMobile ? 30 : 46
-    const pulseCount = isMobile ? 2 : 3
+    const count = isMobile ? 12 : this.filaments.length
+    const pulseCount = 1
     const baseY = height * (isMobile ? 0.67 : 0.7)
     const visibility = clamp(assembly * 1.4) * (1 - burst * 0.4)
 
@@ -184,7 +184,7 @@ export class HeartFlow {
       gradient.addColorStop(0.3, rgba(color, 0.65))
       gradient.addColorStop(0.72, rgba(color, 0.24))
       gradient.addColorStop(1, rgba(color, 0))
-      context.globalAlpha = filament.alpha * 0.52 * visibility
+      context.globalAlpha = filament.alpha * 0.28 * visibility
       context.strokeStyle = gradient
       context.lineWidth = filament.width
       context.beginPath()
@@ -363,7 +363,7 @@ export class HeartFlow {
     const cosX = Math.cos(rotationX)
     const sinX = Math.sin(rotationX)
     const animatedTime = time * motion
-    const count = isMobile ? 24 : this.contourStreams.length
+    const count = isMobile ? 12 : this.contourStreams.length
     const visibility = clamp(assembly * 1.5) * (1 - burst * 0.88)
 
     const project = (angle: number, radius: number, depth: number) => {

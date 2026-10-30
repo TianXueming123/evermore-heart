@@ -504,7 +504,7 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
             centerY - (y + 0.12) * heartScale * heartbeat * perspective
           const twinkle = 0.84 + Math.sin(time * 1.4 + particle.phase) * 0.14 * motion
           const size = particle.size * perspective * (0.95 + twinkle * 0.28) * (1 + energyWave * 0.65)
-          const rimLight = particle.rim > 0.76 ? 1 : 0.38
+          const rimLight = particle.rim > 0.76 ? 1 : 0.24
           context.globalAlpha = clamp(
             easedAssembly * (twinkle * (0.88 + z * 0.16) + energyWave * 0.28) * rimLight,
             0.025,
