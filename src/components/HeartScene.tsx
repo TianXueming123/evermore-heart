@@ -5,6 +5,7 @@ import {
   useRef,
   type KeyboardEvent,
 } from 'react'
+import { HeartFlow } from './heart-flow'
 
 export type HeartSceneHandle = {
   bloom: () => void
@@ -28,6 +29,7 @@ type HeartParticle = {
   delay: number
   color: number
   burst: number
+  rim: number
 }
 
 type Star = {
@@ -167,6 +169,7 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
         '(prefers-reduced-motion: reduce)',
       ).matches
       const sprites = PALETTE.map(createGlowSprite)
+      const flow = new HeartFlow()
       const pointer = { x: 0, y: 0 }
       const smoothedPointer = { x: 0, y: 0 }
       const fragments: Fragment[] = []
@@ -191,13 +194,16 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
         stars.length = 0
         waveParticles.length = 0
         isMobile = width < 640
-        const heartCount = reducedMotion ? 1800 : isMobile ? 2400 : 3900
+        const heartCount = reducedMotion ? 1800 : isMobile ? 2500 : 3600
         const starCount = isMobile ? 75 : 140
         const waveCount = isMobile ? 500 : 900
 
         for (let index = 0; index < heartCount; index += 1) {
           const angle = Math.random() * Math.PI * 2
-          const radius = Math.sqrt(Math.random())
+          const radius =
+            Math.random() < 0.62
+              ? randomBetween(0.78, 1.03)
+              : Math.sqrt(Math.random()) * 0.86
           const x = (16 * Math.sin(angle) ** 3 * radius) / 17
           const y =
             ((13 * Math.cos(angle) -
@@ -212,15 +218,15 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
             (1 - radius * 0.42)
           const colorRoll = Math.random()
           const color =
-            colorRoll < 0.2
+            colorRoll < 0.3
               ? 0
-              : colorRoll < 0.48
+              : colorRoll < 0.6
                 ? 1
-                : colorRoll < 0.7
+                : colorRoll < 0.77
                   ? 2
-                  : colorRoll < 0.84
+                  : colorRoll < 0.87
                     ? 3
-                    : colorRoll < 0.94
+                    : colorRoll < 0.95
                       ? 4
                       : 5
           const scatterAngle = angle + randomBetween(-1.2, 1.2)
@@ -233,11 +239,12 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
             startX: Math.cos(scatterAngle) * scatterRadius,
             startY: Math.sin(scatterAngle) * scatterRadius * 0.75,
             startZ: z + randomBetween(-2.5, 2.5),
-            size: randomBetween(2.2, 5.8) * (Math.random() < 0.06 ? 1.7 : 1),
+            size: randomBetween(1.6, 4.8) * (Math.random() < 0.06 ? 1.65 : 1),
             phase: Math.random() * Math.PI * 2,
             delay: Math.random() * 0.85,
             color,
             burst: randomBetween(0.65, 1.35),
+            rim: radius,
           })
         }
 
@@ -278,7 +285,7 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
 
       const spawnFragments = () => {
         const centerX = width / 2
-        const centerY = height * (isMobile ? 0.43 : 0.45)
+        const centerY = height * (isMobile ? 0.43 : 0.475)
         const count = isMobile ? 28 : 44
         for (let index = 0; index < count; index += 1) {
           const angle = Math.random() * Math.PI * 2
@@ -321,10 +328,10 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
         const time = (now - startedAt) / 1000
         const motion = reducedMotion ? 0 : 1
         const centerX = width / 2
-        const centerY = height * (isMobile ? 0.43 : 0.45)
+        const centerY = height * (isMobile ? 0.43 : 0.475)
         const heartScale = Math.min(
-          width * (isMobile ? 0.39 : 0.28),
-          height * 0.31,
+          width * (isMobile ? 0.37 : 0.25),
+          height * (isMobile ? 0.29 : 0.255),
         )
         const phase = (time * 1.05) % 1
         const beatGlow = Math.exp(-phase * 8)
@@ -415,13 +422,29 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
         )
 
         const coreAssembly = reducedMotion ? 1 : clamp((time - 0.45) / 1.9)
+        const flowOptions = {
+          width,
+          height,
+          centerX,
+          centerY,
+          scale: heartScale,
+          time,
+          motion,
+          assembly: coreAssembly,
+          heartbeat,
+          rotationX,
+          rotationY,
+          isMobile,
+          burst: burstAmount,
+        }
+        flow.drawStreamers(context, sprites, flowOptions)
         context.save()
         context.translate(centerX, centerY)
         context.scale(heartScale * heartbeat, heartScale * heartbeat)
         const coreGradient = context.createRadialGradient(0, -0.08, 0, 0, -0.08, 1.2)
-        coreGradient.addColorStop(0, 'rgba(255,112,164,0.24)')
-        coreGradient.addColorStop(0.48, 'rgba(255,94,155,0.12)')
-        coreGradient.addColorStop(1, 'rgba(202,113,255,0.015)')
+        coreGradient.addColorStop(0, 'rgba(255,112,164,0.16)')
+        coreGradient.addColorStop(0.48, 'rgba(255,94,155,0.065)')
+        coreGradient.addColorStop(1, 'rgba(202,113,255,0.008)')
         context.globalAlpha = coreAssembly * (1 - burstAmount * 0.82)
         context.filter = 'blur(9px)'
         context.fillStyle = coreGradient
@@ -481,9 +504,10 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
             centerY - (y + 0.12) * heartScale * heartbeat * perspective
           const twinkle = 0.84 + Math.sin(time * 1.4 + particle.phase) * 0.14 * motion
           const size = particle.size * perspective * (0.95 + twinkle * 0.28) * (1 + energyWave * 0.65)
+          const rimLight = particle.rim > 0.76 ? 1 : 0.38
           context.globalAlpha = clamp(
-            easedAssembly * (twinkle * (0.88 + z * 0.16) + energyWave * 0.28),
-            0.08,
+            easedAssembly * (twinkle * (0.88 + z * 0.16) + energyWave * 0.28) * rimLight,
+            0.025,
             1,
           )
           context.drawImage(
@@ -494,6 +518,7 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
             size,
           )
         }
+        flow.drawSparkles(context, flowOptions)
 
         const burstAge = (now - burstStarted) / 1000
         if (burstAge >= 0 && burstAge < 1.8) {

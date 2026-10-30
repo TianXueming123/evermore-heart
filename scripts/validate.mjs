@@ -58,6 +58,24 @@ try {
   if (!desktop.canvasWidth || !desktop.canvasHeight) throw new Error('Heart canvas did not render.')
   if (desktop.horizontalOverflow) throw new Error('Desktop layout has horizontal overflow.')
 
+  const animation = await page.evaluate(async () => {
+    const canvas = document.querySelector('canvas')
+    if (!canvas) return { changed: false, frames: 0 }
+    const initialFrame = canvas.toDataURL()
+    let frames = 0
+    await new Promise((resolve) => {
+      const started = performance.now()
+      const measure = () => {
+        frames += 1
+        if (performance.now() - started >= 650) resolve(undefined)
+        else requestAnimationFrame(measure)
+      }
+      requestAnimationFrame(measure)
+    })
+    return { changed: initialFrame !== canvas.toDataURL(), frames }
+  })
+  if (!animation.changed) throw new Error('Heart animation is not advancing.')
+
   await page.getByRole('button', { name: '轻触爱心，让浪漫绽放' }).click()
   await page.waitForTimeout(500)
   await page.getByText('遇见你，是我宇宙里最温柔的幸运').waitFor({ state: 'visible' })
