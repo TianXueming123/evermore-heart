@@ -3,8 +3,8 @@ import { spawnSync } from 'node:child_process'
 const command = process.argv[2]
 const repoName = process.argv[3] || 'evermore-heart'
 
-if (!['create-repo', 'enable-pages'].includes(command)) {
-  throw new Error('Usage: node scripts/github-api.mjs create-repo|enable-pages [repo-name]')
+if (!['create-repo', 'enable-pages', 'pages-status'].includes(command)) {
+  throw new Error('Usage: node scripts/github-api.mjs create-repo|enable-pages|pages-status [repo-name]')
 }
 
 const credential = spawnSync('git', ['credential', 'fill'], {
@@ -73,7 +73,7 @@ if (command === 'create-repo') {
     cloneUrl: repo.clone_url,
     homepage: repo.homepage,
   }, null, 2))
-} else {
+} else if (command === 'enable-pages') {
   let pages
   try {
     pages = await api(`/repos/${user.login}/${repoName}/pages`, {
@@ -94,4 +94,8 @@ if (command === 'create-repo') {
     branch: pages.source?.branch,
     path: pages.source?.path,
   }, null, 2))
+} else {
+  const pages = await api(`/repos/${user.login}/${repoName}/pages`)
+  const latestBuild = await api(`/repos/${user.login}/${repoName}/pages/builds/latest`)
+  console.log(JSON.stringify({ pages, latestBuild }, null, 2))
 }
