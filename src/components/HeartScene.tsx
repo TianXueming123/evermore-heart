@@ -196,7 +196,7 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
         isMobile = width < 640
         const heartCount = reducedMotion ? 1800 : isMobile ? 2500 : 3600
         const starCount = isMobile ? 75 : 140
-        const waveCount = isMobile ? 500 : 900
+        const waveCount = isMobile ? 180 : 320
 
         for (let index = 0; index < heartCount; index += 1) {
           const angle = Math.random() * Math.PI * 2
@@ -267,7 +267,7 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
             speed: randomBetween(0.0008, 0.0028),
             size: randomBetween(1.8, 5.2),
             color: Math.floor(randomBetween(0, PALETTE.length)),
-            alpha: randomBetween(0.18, 0.72),
+            alpha: randomBetween(0.05, 0.22),
           })
         }
       }
@@ -328,7 +328,8 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
         const time = (now - startedAt) / 1000
         const motion = reducedMotion ? 0 : 1
         const centerX = width / 2
-        const centerY = height * (isMobile ? 0.43 : 0.475)
+        const centerY =
+          height * (isMobile ? 0.43 : 0.475) + Math.sin(time * 0.62) * 5 * motion
         const heartScale = Math.min(
           width * (isMobile ? 0.37 : 0.25),
           height * (isMobile ? 0.29 : 0.255),
@@ -396,7 +397,7 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
         context.translate(centerX, centerY + heartScale * 0.02)
         context.rotate(-0.17)
         context.scale(1, 0.29)
-        context.globalAlpha = 0.75
+        context.globalAlpha = 0.38
         context.strokeStyle = orbitGradient
         context.lineWidth = 0.7
         context.beginPath()
@@ -412,7 +413,7 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
           satelliteX * Math.cos(orbitTilt) - satelliteY * Math.sin(orbitTilt)
         const satelliteRotatedY =
           satelliteX * Math.sin(orbitTilt) + satelliteY * Math.cos(orbitTilt)
-        context.globalAlpha = 0.85
+        context.globalAlpha = 0.5
         context.drawImage(
           sprites[5],
           centerX + satelliteRotatedX - 7,
@@ -441,10 +442,11 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
         context.save()
         context.translate(centerX, centerY)
         context.scale(heartScale * heartbeat, heartScale * heartbeat)
-        const coreGradient = context.createRadialGradient(0, -0.08, 0, 0, -0.08, 1.2)
-        coreGradient.addColorStop(0, 'rgba(255,112,164,0.16)')
-        coreGradient.addColorStop(0.48, 'rgba(255,94,155,0.065)')
-        coreGradient.addColorStop(1, 'rgba(202,113,255,0.008)')
+        const coreFlowY = -0.08 + Math.sin(time * 0.72) * 0.34 * motion
+        const coreGradient = context.createRadialGradient(0, coreFlowY, 0, 0, coreFlowY, 0.86)
+        coreGradient.addColorStop(0, 'rgba(255,112,164,0.2)')
+        coreGradient.addColorStop(0.48, 'rgba(255,94,155,0.07)')
+        coreGradient.addColorStop(1, 'rgba(202,113,255,0.005)')
         context.globalAlpha = coreAssembly * (1 - burstAmount * 0.82)
         context.filter = 'blur(9px)'
         context.fillStyle = coreGradient
@@ -557,7 +559,7 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
             isHeart: true,
             ambient: true,
           })
-          nextAmbientHeartAt = time + randomBetween(0.45, 0.9)
+          nextAmbientHeartAt = time + randomBetween(1.2, 2)
         }
 
         for (const particle of waveParticles) {

@@ -87,7 +87,7 @@ function cubicPoint(
 }
 
 export class HeartFlow {
-  private readonly filaments: Filament[] = Array.from({ length: 24 }, (_, index) => ({
+  private readonly filaments: Filament[] = Array.from({ length: 8 }, (_, index) => ({
     angle: Math.PI * random(0.4, 1.6),
     reach: random(1.25, 2.65),
     lift: random(0.12, 1.1),
@@ -113,15 +113,15 @@ export class HeartFlow {
     cross: Math.random() < 0.1,
   }))
 
-  private readonly contourStreams = Array.from({ length: 20 }, (_, index) => ({
+  private readonly contourStreams = Array.from({ length: 12 }, (_, index) => ({
     offset: Math.random(),
-    speed: random(0.055, 0.095),
-    radius: random(0.94, 1.025),
-    trail: random(0.2, 0.5),
+    speed: random(0.045, 0.075),
+    radius: random(0.95, 1.02),
+    trail: random(0.24, 0.52),
     width: random(0.65, 1.35),
     depth: random(-0.08, 0.08),
     color: index % FILAMENT_COLORS.length,
-    direction: index % 6 === 0 ? -1 : 1,
+    direction: index % 5 === 0 ? -1 : 1,
   }))
 
   drawStreamers(
@@ -143,7 +143,7 @@ export class HeartFlow {
       burst,
     } = options
     const animatedTime = time * motion
-    const count = isMobile ? 12 : this.filaments.length
+    const count = isMobile ? 5 : this.filaments.length
     const pulseCount = 1
     const baseY = height * (isMobile ? 0.67 : 0.7)
     const visibility = clamp(assembly * 1.4) * (1 - burst * 0.4)
@@ -229,7 +229,7 @@ export class HeartFlow {
       }
     }
 
-    for (let band = 0; band < 3; band += 1) {
+    for (let band = 0; band < 1; band += 1) {
       const ribbon = context.createLinearGradient(0, 0, width, 0)
       ribbon.addColorStop(0, 'rgba(255,183,216,0)')
       ribbon.addColorStop(0.22, 'rgba(222,183,255,0.42)')
@@ -363,7 +363,7 @@ export class HeartFlow {
     const cosX = Math.cos(rotationX)
     const sinX = Math.sin(rotationX)
     const animatedTime = time * motion
-    const count = isMobile ? 12 : this.contourStreams.length
+    const count = isMobile ? 8 : this.contourStreams.length
     const visibility = clamp(assembly * 1.5) * (1 - burst * 0.88)
 
     const project = (angle: number, radius: number, depth: number) => {
