@@ -56,7 +56,7 @@ const rgba = (color: Color, alpha: number) =>
 
 function heartPoint(angle: number, radius = 1): Point {
   return {
-    x: (16 * Math.sin(angle) ** 3 * radius) / 17,
+    x: ((16 * Math.sin(angle) ** 3 * 1.08) * radius) / 17,
     y:
       -((13 * Math.cos(angle) -
         5 * Math.cos(2 * angle) -
@@ -113,12 +113,24 @@ export class HeartFlow {
     cross: Math.random() < 0.16,
   }))
 
+  private readonly contourStreams = Array.from({ length: 36 }, (_, index) => ({
+    offset: Math.random(),
+    speed: random(0.055, 0.095),
+    radius: index % 4 === 0 ? random(0.5, 0.78) : random(0.91, 1.035),
+    trail: random(0.2, 0.5),
+    width: random(0.65, 1.35),
+    depth: random(-0.08, 0.08),
+    color: index % FILAMENT_COLORS.length,
+    direction: index % 6 === 0 ? -1 : 1,
+  }))
+
   drawStreamers(
     context: CanvasRenderingContext2D,
     sprites: HTMLCanvasElement[],
     options: FrameOptions,
   ) {
     const {
+      width,
       height,
       centerX,
       centerY,
@@ -131,7 +143,8 @@ export class HeartFlow {
       burst,
     } = options
     const animatedTime = time * motion
-    const count = isMobile ? 44 : this.filaments.length
+    const count = isMobile ? 30 : 46
+    const pulseCount = isMobile ? 2 : 3
     const baseY = height * (isMobile ? 0.67 : 0.7)
     const visibility = clamp(assembly * 1.4) * (1 - burst * 0.4)
 
@@ -158,20 +171,20 @@ export class HeartFlow {
         y: baseY + wave * scale * 0.065,
       }
       const controlA = {
-        x: start.x + direction * scale * (0.13 + filament.sway * 0.3),
-        y: start.y + scale * (0.2 + filament.lift * 0.13),
+        x: start.x + direction * scale * (0.08 + filament.sway * 0.25),
+        y: start.y + scale * (0.3 + filament.lift * 0.18),
       }
       const controlB = {
-        x: end.x - direction * scale * (0.52 + filament.lift * 0.35) + sway,
-        y: baseY - scale * (0.04 + filament.lift * 0.29) - sway * 0.25,
+        x: end.x - direction * scale * (0.72 + filament.lift * 0.28) + sway,
+        y: baseY - scale * (0.1 + filament.lift * 0.26) - sway * 0.4,
       }
       const color = FILAMENT_COLORS[filament.color]
       const gradient = context.createLinearGradient(start.x, start.y, end.x, end.y)
-      gradient.addColorStop(0, rgba(color, 0.08))
-      gradient.addColorStop(0.3, rgba(color, 0.8))
-      gradient.addColorStop(0.72, rgba(color, 0.34))
+      gradient.addColorStop(0, rgba(color, 0.04))
+      gradient.addColorStop(0.3, rgba(color, 0.65))
+      gradient.addColorStop(0.72, rgba(color, 0.24))
       gradient.addColorStop(1, rgba(color, 0))
-      context.globalAlpha = filament.alpha * visibility
+      context.globalAlpha = filament.alpha * 0.52 * visibility
       context.strokeStyle = gradient
       context.lineWidth = filament.width
       context.beginPath()
@@ -182,35 +195,68 @@ export class HeartFlow {
       }
       context.stroke()
 
-      const headProgress = (animatedTime * filament.speed + filament.phase) % 1
-      const tailProgress = Math.max(0, headProgress - 0.2)
-      const head = cubicPoint(start, controlA, controlB, end, headProgress)
-      const tail = cubicPoint(start, controlA, controlB, end, tailProgress)
-      const trail = context.createLinearGradient(tail.x, tail.y, head.x, head.y)
-      trail.addColorStop(0, rgba(color, 0))
-      trail.addColorStop(0.65, rgba(color, 0.32))
-      trail.addColorStop(1, 'rgba(255,248,252,0.95)')
-      context.globalAlpha = Math.sin(headProgress * Math.PI) * 0.8 * visibility
-      context.strokeStyle = trail
-      context.lineWidth = filament.width + 0.35
+      for (let mote = 0; mote < pulseCount; mote += 1) {
+        const headProgress =
+          (animatedTime * filament.speed + filament.phase + mote / pulseCount) % 1
+        const tailProgress = Math.max(0, headProgress - 0.18)
+        const head = cubicPoint(start, controlA, controlB, end, headProgress)
+        const tail = cubicPoint(start, controlA, controlB, end, tailProgress)
+        const trail = context.createLinearGradient(tail.x, tail.y, head.x, head.y)
+        trail.addColorStop(0, rgba(color, 0))
+        trail.addColorStop(0.58, rgba(color, 0.4))
+        trail.addColorStop(1, 'rgba(255,251,253,1)')
+        context.globalAlpha = Math.sin(headProgress * Math.PI) * 0.9 * visibility
+        context.strokeStyle = trail
+        context.lineWidth = filament.width + 0.55
+        context.beginPath()
+        for (let step = 0; step <= 12; step += 1) {
+          const progress = tailProgress + (headProgress - tailProgress) * (step / 12)
+          const point = cubicPoint(start, controlA, controlB, end, progress)
+          if (step === 0) context.moveTo(point.x, point.y)
+          else context.lineTo(point.x, point.y)
+        }
+        context.stroke()
+
+        const moteSize = 6 + Math.sin(headProgress * Math.PI) * 7
+        context.globalAlpha = Math.sin(headProgress * Math.PI) * 0.88 * visibility
+        context.drawImage(
+          sprites[filament.color % 2 === 0 ? 0 : 1],
+          head.x - moteSize / 2,
+          head.y - moteSize / 2,
+          moteSize,
+          moteSize,
+        )
+      }
+    }
+
+    for (let band = 0; band < 3; band += 1) {
+      const ribbon = context.createLinearGradient(0, 0, width, 0)
+      ribbon.addColorStop(0, 'rgba(255,183,216,0)')
+      ribbon.addColorStop(0.22, 'rgba(222,183,255,0.42)')
+      ribbon.addColorStop(0.5, 'rgba(255,231,241,0.72)')
+      ribbon.addColorStop(0.78, 'rgba(255,183,216,0.42)')
+      ribbon.addColorStop(1, 'rgba(255,183,216,0)')
+      context.globalAlpha = (0.22 - band * 0.045) * visibility
+      context.strokeStyle = ribbon
+      context.lineWidth = 0.65
       context.beginPath()
-      for (let step = 0; step <= 12; step += 1) {
-        const progress = tailProgress + (headProgress - tailProgress) * (step / 12)
-        const point = cubicPoint(start, controlA, controlB, end, progress)
-        if (step === 0) context.moveTo(point.x, point.y)
-        else context.lineTo(point.x, point.y)
+      for (let x = 0; x <= width + 12; x += 12) {
+        const progress = x / width
+        const y =
+          baseY +
+          Math.sin(
+            progress * TAU * (1.35 + band * 0.2) +
+              animatedTime * (0.48 + band * 0.08) +
+              band * 1.6,
+          ) *
+            scale *
+            (0.035 + band * 0.007) +
+          Math.sin(progress * TAU * 3 - animatedTime * 0.3) * scale * 0.012 +
+          band * 7
+        if (x === 0) context.moveTo(x, y)
+        else context.lineTo(x, y)
       }
       context.stroke()
-
-      const moteSize = 4 + Math.sin(headProgress * Math.PI) * 5
-      context.globalAlpha = Math.sin(headProgress * Math.PI) * 0.72 * visibility
-      context.drawImage(
-        sprites[filament.color % 2 === 0 ? 0 : 1],
-        head.x - moteSize / 2,
-        head.y - moteSize / 2,
-        moteSize,
-        moteSize,
-      )
     }
 
     const sourceY = centerY + scale * 0.53 * heartbeat
@@ -218,8 +264,8 @@ export class HeartFlow {
     context.translate(centerX, sourceY)
     context.scale(1, 0.42)
     const source = context.createRadialGradient(0, 0, 0, 0, 0, scale * 0.5)
-    source.addColorStop(0, `rgba(255,238,247,${0.23 * visibility})`)
-    source.addColorStop(0.12, `rgba(255,173,207,${0.16 * visibility})`)
+    source.addColorStop(0, `rgba(255,238,247,${0.2 * visibility})`)
+    source.addColorStop(0.12, `rgba(255,173,207,${0.13 * visibility})`)
     source.addColorStop(1, 'rgba(255,115,175,0)')
     context.globalAlpha = 1
     context.fillStyle = source
@@ -290,6 +336,99 @@ export class HeartFlow {
         context.lineTo(x, y + length * 1.35)
         context.stroke()
       }
+    }
+    context.restore()
+  }
+
+  drawContourStreams(
+    context: CanvasRenderingContext2D,
+    sprites: HTMLCanvasElement[],
+    options: FrameOptions,
+  ) {
+    const {
+      centerX,
+      centerY,
+      scale,
+      time,
+      motion,
+      assembly,
+      heartbeat,
+      rotationX,
+      rotationY,
+      isMobile,
+      burst,
+    } = options
+    const cosY = Math.cos(rotationY)
+    const sinY = Math.sin(rotationY)
+    const cosX = Math.cos(rotationX)
+    const sinX = Math.sin(rotationX)
+    const animatedTime = time * motion
+    const count = isMobile ? 24 : this.contourStreams.length
+    const visibility = clamp(assembly * 1.5) * (1 - burst * 0.88)
+
+    const project = (angle: number, radius: number, depth: number) => {
+      const point = heartPoint(angle, radius)
+      const rotatedX = point.x * cosY + depth * sinY
+      const rotatedZ = -point.x * sinY + depth * cosY
+      const rotatedY = point.y * cosX - rotatedZ * sinX
+      const z = point.y * sinX + rotatedZ * cosX
+      const perspective = 3.8 / (3.8 - z * 0.7)
+      return {
+        x: centerX + rotatedX * scale * heartbeat * perspective,
+        y: centerY + rotatedY * scale * heartbeat * perspective,
+      }
+    }
+
+    context.save()
+    context.globalCompositeOperation = 'lighter'
+    context.lineCap = 'round'
+    context.lineJoin = 'round'
+
+    for (let index = 0; index < count; index += 1) {
+      const stream = this.contourStreams[index]
+      const radius =
+        stream.radius + Math.sin(animatedTime * 0.8 + stream.offset * TAU) * 0.008 * motion
+      const headAngle =
+        stream.offset * TAU + animatedTime * stream.speed * TAU * stream.direction
+      const tailAngle = headAngle - stream.trail * stream.direction
+      const head = project(headAngle, radius, stream.depth)
+      const tail = project(tailAngle, radius, stream.depth)
+      const color = FILAMENT_COLORS[stream.color]
+      const trail = context.createLinearGradient(tail.x, tail.y, head.x, head.y)
+      trail.addColorStop(0, rgba(color, 0))
+      trail.addColorStop(0.45, rgba(color, 0.35))
+      trail.addColorStop(0.82, rgba(color, 0.82))
+      trail.addColorStop(1, 'rgba(255,253,255,1)')
+
+      context.beginPath()
+      for (let step = 0; step <= 18; step += 1) {
+        const angle = tailAngle + (headAngle - tailAngle) * (step / 18)
+        const point = project(angle, radius, stream.depth)
+        if (step === 0) context.moveTo(point.x, point.y)
+        else context.lineTo(point.x, point.y)
+      }
+      context.globalAlpha = 0.16 * visibility
+      context.strokeStyle = rgba(color, 0.42)
+      context.lineWidth = stream.width * 3.2
+      context.stroke()
+      context.globalAlpha = 0.82 * visibility
+      context.strokeStyle = trail
+      context.lineWidth = stream.width
+      context.stroke()
+
+      const glowSize = 10 + stream.width * 5
+      context.globalAlpha = 0.92 * visibility
+      context.drawImage(
+        sprites[0],
+        head.x - glowSize / 2,
+        head.y - glowSize / 2,
+        glowSize,
+        glowSize,
+      )
+      context.fillStyle = '#fffdff'
+      context.beginPath()
+      context.arc(head.x, head.y, 0.75 + stream.width * 0.25, 0, TAU)
+      context.fill()
     }
     context.restore()
   }

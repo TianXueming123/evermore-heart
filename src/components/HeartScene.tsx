@@ -204,7 +204,7 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
             Math.random() < 0.62
               ? randomBetween(0.78, 1.03)
               : Math.sqrt(Math.random()) * 0.86
-          const x = (16 * Math.sin(angle) ** 3 * radius) / 17
+          const x = ((16 * Math.sin(angle) ** 3 * 1.08) * radius) / 17
           const y =
             ((13 * Math.cos(angle) -
               5 * Math.cos(2 * angle) -
@@ -451,7 +451,7 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
         context.beginPath()
         for (let index = 0; index <= 120; index += 1) {
           const angle = (index / 120) * Math.PI * 2
-          const x = (16 * Math.sin(angle) ** 3) / 17
+          const x = ((16 * Math.sin(angle) ** 3 * 1.08)) / 17
           const y =
             -((13 * Math.cos(angle) -
               5 * Math.cos(2 * angle) -
@@ -519,6 +519,7 @@ const HeartScene = forwardRef<HeartSceneHandle, HeartSceneProps>(
           )
         }
         flow.drawSparkles(context, flowOptions)
+        flow.drawContourStreams(context, sprites, flowOptions)
 
         const burstAge = (now - burstStarted) / 1000
         if (burstAge >= 0 && burstAge < 1.8) {
