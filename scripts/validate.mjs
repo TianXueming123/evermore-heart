@@ -21,7 +21,7 @@ try {
   let ready = false
   for (let attempt = 0; attempt < 50; attempt += 1) {
     try {
-      const response = await fetch('http://127.0.0.1:7101/')
+      const response = await fetch('http://127.0.0.1:7101/evermore-heart/')
       if (response.ok) {
         ready = true
         break
@@ -45,7 +45,7 @@ try {
   page.on('console', (message) => {
     if (message.type() === 'error') errors.push(message.text())
   })
-  await page.goto('http://127.0.0.1:7101/', { waitUntil: 'networkidle' })
+  await page.goto('http://127.0.0.1:7101/evermore-heart/', { waitUntil: 'networkidle' })
   await page.waitForTimeout(3600)
   await page.screenshot({ path: `${outputDir}/desktop.png`, fullPage: true })
 
@@ -72,7 +72,7 @@ try {
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } })
   mobile.on('pageerror', (error) => errors.push(error.message))
-  await mobile.goto('http://127.0.0.1:7101/', { waitUntil: 'networkidle' })
+  await mobile.goto('http://127.0.0.1:7101/evermore-heart/', { waitUntil: 'networkidle' })
   await mobile.waitForTimeout(3600)
   await mobile.screenshot({ path: `${outputDir}/mobile.png`, fullPage: true })
   const mobileLayout = await mobile.evaluate(() => ({
